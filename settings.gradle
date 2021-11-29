@@ -1,0 +1,3 @@
+rootProject.name = 'stock-exchange'
+include 'eureka-server'
+include 'exchange-server'
