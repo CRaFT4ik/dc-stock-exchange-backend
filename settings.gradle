@@ -1,3 +1,4 @@
 rootProject.name = 'stock-exchange'
-include 'eureka-server'
-include 'exchange-server'
+include 'cart-service'
+include 'exchange-service'
+include 'auth-service'
