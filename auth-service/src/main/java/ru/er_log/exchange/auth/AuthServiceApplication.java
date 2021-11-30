@@ -8,9 +8,9 @@ import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
 @EnableZuulProxy
 @EnableEurekaServer
 @SpringBootApplication
-public class OldEurekaServerApplication {
+public class AuthServiceApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(OldEurekaServerApplication.class, args);
+        SpringApplication.run(AuthServiceApplication.class, args);
     }
 }
