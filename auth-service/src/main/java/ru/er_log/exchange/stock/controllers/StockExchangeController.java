@@ -19,6 +19,7 @@ import ru.er_log.exchange.stock.models.DealsByLots;
 import ru.er_log.exchange.stock.models.LotPurchase;
 import ru.er_log.exchange.stock.models.LotSale;
 import ru.er_log.exchange.stock.pojos.ActiveLotsResponse;
+import ru.er_log.exchange.stock.pojos.DealsResponse;
 import ru.er_log.exchange.stock.pojos.LotDealRequest;
 import ru.er_log.exchange.stock.repos.DealsByLotsRepository;
 import ru.er_log.exchange.stock.repos.LotPurchaseRepository;
@@ -93,17 +94,19 @@ public class StockExchangeController {
     }
 
     @GetMapping("/deals")
-    public ResponseEntity<?> showDeals() {
+    public ResponseEntity<?> showAllDeals() {
         List<DealsByLots> dealsByLots = dealsByLotsRepository.findAll();
-        return ResponseEntity.ok(dealsByLots);
+
+        var responseBody = new DealsResponse(dealsByLots);
+        return ResponseEntity.ok(responseBody);
     }
 
     @GetMapping("/lots")
-    public ResponseEntity<?> showLots() {
-        List<LotPurchase> lotPurchases = lotPurchaseRepository.findAll();
-        List<LotSale> lotSales = lotSaleRepository.findAll();
+    public ResponseEntity<?> showActiveLots() {
+        List<LotPurchase> lotPurchases = lotPurchaseRepository.findByIsActiveTrue();
+        List<LotSale> lotSales = lotSaleRepository.findByIsActiveTrue();
 
-        ActiveLotsResponse lotsResponse = new ActiveLotsResponse(lotPurchases, lotSales);
-        return ResponseEntity.ok(lotsResponse);
+        var responseBody = new ActiveLotsResponse(lotPurchases, lotSales);
+        return ResponseEntity.ok(responseBody);
     }
 }
