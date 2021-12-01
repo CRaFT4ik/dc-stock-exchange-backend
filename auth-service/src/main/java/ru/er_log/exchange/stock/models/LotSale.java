@@ -28,12 +28,20 @@ public class LotSale {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    @Column(name = "timestamp_created", nullable = false)
+    private long timestampCreated;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
+
     public LotSale() {
     }
 
-    public LotSale(BigDecimal price, User user) {
+    public LotSale(BigDecimal price, User user, long timestampCreated) {
         this.price = price;
         this.user = user;
+        this.timestampCreated = timestampCreated;
+        this.isActive = true;
     }
 
     public UUID getId() {
@@ -44,15 +52,19 @@ public class LotSale {
         return price;
     }
 
-    public void setPrice(BigDecimal price) {
-        this.price = price;
-    }
-
     public User getUser() {
         return user;
     }
 
-    public void setUser(User user) {
-        this.user = user;
+    public long getTimestampCreated() {
+        return timestampCreated;
+    }
+
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
     }
 }

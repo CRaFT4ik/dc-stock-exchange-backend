@@ -1,4 +1,4 @@
-package ru.er_log.exchange.auth.service;
+package ru.er_log.exchange.auth.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.springframework.security.core.GrantedAuthority;

@@ -15,7 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import ru.er_log.exchange.auth.configs.jwt.AuthEntryPointJwt;
 import ru.er_log.exchange.auth.configs.jwt.AuthTokenFilter;
-import ru.er_log.exchange.auth.service.UserDetailsServiceImpl;
+import ru.er_log.exchange.auth.services.UserDetailsServiceImpl;
 
 @EnableWebSecurity
 @Configuration

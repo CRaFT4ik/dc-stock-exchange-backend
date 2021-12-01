@@ -1,4 +1,4 @@
-package ru.er_log.exchange.auth.service;
+package ru.er_log.exchange.auth.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -7,7 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.er_log.exchange.auth.models.User;
-import ru.er_log.exchange.auth.repository.UserRepository;
+import ru.er_log.exchange.auth.repos.UserRepository;
 
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {

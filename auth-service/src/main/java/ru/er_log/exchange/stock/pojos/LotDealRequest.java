@@ -1,4 +1,4 @@
-package ru.er_log.exchange.stock.pojo;
+package ru.er_log.exchange.stock.pojos;
 
 import java.math.BigDecimal;
 

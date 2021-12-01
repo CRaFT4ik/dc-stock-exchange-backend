@@ -1,4 +1,4 @@
-package ru.er_log.exchange.auth.pojo;
+package ru.er_log.exchange.auth.pojos;
 
 import java.util.Set;
 

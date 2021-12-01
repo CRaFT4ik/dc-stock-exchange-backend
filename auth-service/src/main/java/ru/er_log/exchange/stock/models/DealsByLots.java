@@ -18,7 +18,7 @@ import java.util.UUID;
                 @UniqueConstraint(columnNames = "lot_sale_id"),
                 @UniqueConstraint(columnNames = "lot_purchase_id")
         })
-public class LotDeal {
+public class DealsByLots {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -32,12 +32,16 @@ public class LotDeal {
     @JoinColumn(name = "lot_purchase_id", nullable = false)
     private LotPurchase lotPurchase;
 
-    public LotDeal() {
+    @Column(name = "timestamp_created", nullable = false)
+    private long timestampCreated;
+
+    public DealsByLots() {
     }
 
-    public LotDeal(LotSale lotSale, LotPurchase lotPurchase) {
+    public DealsByLots(LotSale lotSale, LotPurchase lotPurchase, long timestampCreated) {
         this.lotSale = lotSale;
         this.lotPurchase = lotPurchase;
+        this.timestampCreated = timestampCreated;
     }
 
     public UUID getId() {
@@ -50,5 +54,9 @@ public class LotDeal {
 
     public LotSale getLotSale() {
         return lotSale;
+    }
+
+    public long getTimestampCreated() {
+        return timestampCreated;
     }
 }
