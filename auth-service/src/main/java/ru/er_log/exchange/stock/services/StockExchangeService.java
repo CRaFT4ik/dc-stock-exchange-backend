@@ -3,7 +3,6 @@ package ru.er_log.exchange.stock.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,10 +16,9 @@ import ru.er_log.exchange.stock.repos.LotPurchaseRepository;
 import ru.er_log.exchange.stock.repos.LotSaleRepository;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 public class StockExchangeService {
@@ -38,6 +36,7 @@ public class StockExchangeService {
 
     @Scheduled(initialDelay = 10000, fixedDelay = 60000)
     public void makeDeals() {
+        LOG.info("- - - - - - - - - - - - - - - -");
         LOG.info("Preparing to handling deals...");
         try {
             makeDealsImpl();
@@ -58,43 +57,42 @@ public class StockExchangeService {
         final int totalSales = sales.size();
         final long timestamp = System.currentTimeMillis();
 
+        u:
         for (LotPurchase purchase : purchases) {
-            Stream<LotSale> availableSales = sales.stream()
-                    .filter(e -> e.getPrice().compareTo(purchase.getPrice()) <= 0);
+            Iterator<LotSale> saleIterator = sales.iterator();
+            while (saleIterator.hasNext()) {
+                LotSale sale = saleIterator.next();
 
-            Optional<LotSale> saleOptional;
-            while (true) {
-                saleOptional = availableSales.findFirst();
-
-                if (saleOptional.isEmpty()) {
-                    // Check if we find something for this purchase lot.
-                    // Otherwise, breaks operation because purchases are ordered by price.
-                    outResults(totalPurchases, totalSales, deals.size());
-                    return;
-                } else if (!saleOptional.get().getUser().getId().equals(purchase.getUser().getId())) {
-                    // Check if it's not the same user in sale & purchase.
-                    break;
+                // Check if we find something with the good price for this purchase lot.
+                // Otherwise, breaks operation because purchases are ordered by price.
+                if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
+                    break u;
                 }
 
-                availableSales = availableSales.skip(1);
+                // Finding sale lot with user != user in purchase lot.
+                if (!sale.getUser().getId().equals(purchase.getUser().getId())) {
+                    deals.add(new DealsByLots(sale, purchase, timestamp));
+                    saleIterator.remove();
+                    break;
+                }
             }
-
-            LotSale sale = saleOptional.get();
-            DealsByLots deal = new DealsByLots(sale, purchase, timestamp);
-
-            purchase.setActive(false);
-            sale.setActive(false);
-            deals.add(deal);
         }
 
-        saveTransactions(deals);
+        if (deals.size() > 0) {
+            saveTransactions(deals);
+        }
         outResults(totalPurchases, totalSales, deals.size());
     }
 
     @Transactional
     protected Pair<List<LotPurchase>, List<LotSale>> getPurchasesAndSales() {
-        List<LotPurchase> purchases = lotPurchaseRepository.findByIsActiveTrue(Sort.by(Sort.Order.desc("price")));
-        List<LotSale> sales = lotSaleRepository.findByIsActiveTrue(Sort.by(Sort.Order.asc("timestampCreated"), Sort.Order.desc("price")));
+        // First parameter happens later.
+        Sort sortPurchases = Sort.by(Sort.Order.asc("price"), Sort.Order.asc("timestampCreated"));
+        List<LotPurchase> purchases = lotPurchaseRepository.findByIsActiveTrue(sortPurchases);
+
+        Sort sortSales = Sort.by(Sort.Order.asc("price"), Sort.Order.asc("timestampCreated"));
+        List<LotSale> sales = lotSaleRepository.findByIsActiveTrue(sortSales);
+
         return Pair.of(purchases, sales);
     }
 
@@ -103,9 +101,11 @@ public class StockExchangeService {
         dealsByLotsRepository.saveAll(deals);
 
         List<LotPurchase> purchases = deals.stream().map(DealsByLots::getLotPurchase).collect(Collectors.toList());
+        purchases.forEach(e -> e.setActive(false));
         lotPurchaseRepository.saveAll(purchases);
 
         List<LotSale> sales = deals.stream().map(DealsByLots::getLotSale).collect(Collectors.toList());
+        sales.forEach(e -> e.setActive(false));
         lotSaleRepository.saveAll(sales);
     }
 
