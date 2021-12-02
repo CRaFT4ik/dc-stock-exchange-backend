@@ -57,7 +57,6 @@ public class StockExchangeService {
         final int totalSales = sales.size();
         final long timestamp = System.currentTimeMillis();
 
-        u:
         for (LotPurchase purchase : purchases) {
             Iterator<LotSale> saleIterator = sales.iterator();
             while (saleIterator.hasNext()) {
@@ -66,7 +65,7 @@ public class StockExchangeService {
                 // Check if we find something with the good price for this purchase lot.
                 // Otherwise, breaks operation because purchases are ordered by price.
                 if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
-                    break u;
+                    break;
                 }
 
                 // Finding sale lot with user != user in purchase lot.
@@ -87,10 +86,10 @@ public class StockExchangeService {
     @Transactional
     protected Pair<List<LotPurchase>, List<LotSale>> getPurchasesAndSales() {
         // First parameter happens later.
-        Sort sortPurchases = Sort.by(Sort.Order.asc("price"), Sort.Order.asc("timestampCreated"));
+        Sort sortPurchases = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
         List<LotPurchase> purchases = lotPurchaseRepository.findByIsActiveTrue(sortPurchases);
 
-        Sort sortSales = Sort.by(Sort.Order.asc("price"), Sort.Order.asc("timestampCreated"));
+        Sort sortSales = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
         List<LotSale> sales = lotSaleRepository.findByIsActiveTrue(sortSales);
 
         return Pair.of(purchases, sales);

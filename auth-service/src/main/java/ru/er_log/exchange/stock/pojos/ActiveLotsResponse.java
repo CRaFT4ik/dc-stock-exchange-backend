@@ -2,6 +2,7 @@ package ru.er_log.exchange.stock.pojos;
 
 import ru.er_log.exchange.stock.models.LotPurchase;
 import ru.er_log.exchange.stock.models.LotSale;
+import ru.er_log.exchange.stock.pojos.entities.Lot;
 
 import java.util.List;
 import java.util.stream.Collectors;

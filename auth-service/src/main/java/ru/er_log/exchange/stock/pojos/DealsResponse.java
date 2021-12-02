@@ -1,6 +1,7 @@
 package ru.er_log.exchange.stock.pojos;
 
 import ru.er_log.exchange.stock.models.DealsByLots;
+import ru.er_log.exchange.stock.pojos.entities.Lot;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -16,10 +17,12 @@ public class DealsResponse {
     private static class Deal {
         public final Lot lotPurchase;
         public final Lot lotSale;
+        public final long timestampCreated;
 
         public Deal(DealsByLots dealsByLots) {
-            lotPurchase = new Lot(dealsByLots.getLotPurchase());
-            lotSale = new Lot(dealsByLots.getLotSale());
+            this.lotPurchase = new Lot(dealsByLots.getLotPurchase());
+            this.lotSale = new Lot(dealsByLots.getLotSale());
+            this.timestampCreated = dealsByLots.getTimestampCreated();
         }
     }
 }
