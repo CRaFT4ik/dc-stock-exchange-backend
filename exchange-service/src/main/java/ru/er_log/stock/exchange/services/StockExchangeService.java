@@ -62,11 +62,11 @@ public class StockExchangeService {
             while (saleIterator.hasNext()) {
                 LotSale sale = saleIterator.next();
 
-                // Check if we find something with the good price for this purchase lot.
-                // Otherwise, breaks operation because purchases are ordered by price.
-                if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
-                    break;
-                }
+//                // Check if we find something with the good price for this purchase lot.
+//                // Otherwise, breaks operation because purchases are ordered by price.
+//                if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
+//                    break;
+//                }
 
                 // Finding sale lot with user != user in purchase lot.
                 if (!sale.getUser().getId().equals(purchase.getUser().getId())) {
