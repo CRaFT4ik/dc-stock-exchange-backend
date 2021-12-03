@@ -1,5 +1,7 @@
-# Stock exchange
+# Stock exchange 
 ## Distributed computing 2021
+
+This is the backend part of the whole project, which works with the Spring framework. Android app you can [find here](https://github.com/CRaFT4ik/dc-stock-exchange-android). 
 
 ### Task
 Electronic stock exchange. Available operations:

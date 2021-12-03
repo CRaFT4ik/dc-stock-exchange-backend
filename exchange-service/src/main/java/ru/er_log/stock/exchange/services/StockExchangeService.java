@@ -34,7 +34,7 @@ public class StockExchangeService {
     @Autowired
     DealsByLotsRepository dealsByLotsRepository;
 
-    @Scheduled(initialDelay = 10000, fixedDelay = 60000)
+    @Scheduled(initialDelay = 10000, fixedDelay = 10000)
     public void makeDeals() {
         LOG.info("- - - - - - - - - - - - - - - -");
         LOG.info("Preparing to handling deals...");
@@ -62,11 +62,11 @@ public class StockExchangeService {
             while (saleIterator.hasNext()) {
                 LotSale sale = saleIterator.next();
 
-//                // Check if we find something with the good price for this purchase lot.
-//                // Otherwise, breaks operation because purchases are ordered by price.
-//                if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
-//                    break;
-//                }
+                // Check if we find something with the good price for this purchase lot.
+                // Otherwise, breaks operation because purchases are ordered by price.
+                if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
+                    continue;
+                }
 
                 // Finding sale lot with user != user in purchase lot.
                 if (!sale.getUser().getId().equals(purchase.getUser().getId())) {
