@@ -34,7 +34,7 @@ public class StockExchangeService {
     @Autowired
     DealsByLotsRepository dealsByLotsRepository;
 
-    @Scheduled(initialDelay = 10000, fixedDelay = 10000)
+    @Scheduled(initialDelay = 10 * 1000, fixedDelay = 15 * 1000)
     public void makeDeals() {
         LOG.info("- - - - - - - - - - - - - - - -");
         LOG.info("Preparing to handling deals...");
@@ -59,21 +59,25 @@ public class StockExchangeService {
 
         for (LotPurchase purchase : purchases) {
             Iterator<LotSale> saleIterator = sales.iterator();
+
             while (saleIterator.hasNext()) {
                 LotSale sale = saleIterator.next();
 
-                // Check if we find something with the good price for this purchase lot.
+                // Checks if we find something with the good price for this purchase lot.
                 // Otherwise, breaks operation because purchases are ordered by price.
                 if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
                     continue;
                 }
 
-                // Finding sale lot with user != user in purchase lot.
-                if (!sale.getUser().getId().equals(purchase.getUser().getId())) {
-                    deals.add(new DealsByLots(sale, purchase, timestamp));
-                    saleIterator.remove();
-                    break;
+                // Finds the sale lot with user != user in the purchase lot.
+                if (sale.getUser().getId().equals(purchase.getUser().getId())) {
+                    continue;
                 }
+
+                // Makes the deal.
+                deals.add(new DealsByLots(sale, purchase, timestamp));
+                saleIterator.remove();
+                break;
             }
         }
 
@@ -85,7 +89,7 @@ public class StockExchangeService {
 
     @Transactional
     protected Pair<List<LotPurchase>, List<LotSale>> getPurchasesAndSales() {
-        // First parameter happens later.
+        // In sort first parameter happens later.
         Sort sortPurchases = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
         List<LotPurchase> purchases = lotPurchaseRepository.findByIsActiveTrue(sortPurchases);
 
