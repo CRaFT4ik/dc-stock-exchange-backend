@@ -1,4 +1,4 @@
-FROM gradle:7.4.0-jdk11-alpine AS cache
+FROM gradle:7.4.0-jdk17 AS cache
 RUN mkdir /gradle_cache
 ENV GRADLE_USER_HOME /gradle_cache
 WORKDIR /build
@@ -14,7 +14,7 @@ RUN gradle :exchange-service:bootJar -i --stacktrace
 
 ###
 
-FROM openjdk:12-alpine
+FROM openjdk:17
 MAINTAINER Eldar Timraleev <eldar.tim@gmail.com>
 
 RUN mkdir app
