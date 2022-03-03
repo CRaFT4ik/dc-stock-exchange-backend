@@ -15,15 +15,15 @@ import ru.er_log.stock.auth.models.User;
 import ru.er_log.stock.auth.pojos.MessageResponse;
 import ru.er_log.stock.auth.repos.UserRepository;
 import ru.er_log.stock.auth.services.UserDetailsServiceImpl;
-import ru.er_log.stock.exchange.models.LotTransactions;
-import ru.er_log.stock.exchange.models.LotOrder;
 import ru.er_log.stock.exchange.models.LotOffer;
+import ru.er_log.stock.exchange.models.LotOrder;
+import ru.er_log.stock.exchange.models.LotTransactions;
 import ru.er_log.stock.exchange.pojos.ActiveLotsResponse;
 import ru.er_log.stock.exchange.pojos.DealsResponse;
 import ru.er_log.stock.exchange.pojos.LotDealRequest;
-import ru.er_log.stock.exchange.repos.LotTransactionsRepository;
-import ru.er_log.stock.exchange.repos.LotOrdersRepository;
 import ru.er_log.stock.exchange.repos.LotOffersRepository;
+import ru.er_log.stock.exchange.repos.LotOrdersRepository;
+import ru.er_log.stock.exchange.repos.LotTransactionsRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -63,7 +63,8 @@ public class StockExchangeController {
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Error, user with name '" + username + "' is not found"));
 
-            LotOrder lotOrder = new LotOrder(dealRequest.getPrice(), currentUser, System.currentTimeMillis());
+            LotOrder lotOrder = new LotOrder(dealRequest.getPrice(), dealRequest.getAmount(), currentUser,
+                    System.currentTimeMillis());
             lotOrdersRepository.save(lotOrder);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -84,7 +85,8 @@ public class StockExchangeController {
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Error, user with name '" + username + "' is not found"));
 
-            LotOffer lotOffer = new LotOffer(dealRequest.getPrice(), currentUser, System.currentTimeMillis());
+            LotOffer lotOffer = new LotOffer(dealRequest.getPrice(), dealRequest.getAmount(), currentUser,
+                    System.currentTimeMillis());
             lotOffersRepository.save(lotOffer);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));

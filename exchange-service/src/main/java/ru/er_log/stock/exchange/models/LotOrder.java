@@ -40,8 +40,9 @@ public class LotOrder {
     public LotOrder() {
     }
 
-    public LotOrder(BigDecimal price, User user, long timestampCreated) {
+    public LotOrder(BigDecimal price, BigDecimal amount, User user, long timestampCreated) {
         this.price = price;
+        this.amount = amount;
         this.user = user;
         this.timestampCreated = timestampCreated;
         this.isActive = true;

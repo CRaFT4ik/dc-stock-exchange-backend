@@ -15,9 +15,10 @@ import ru.er_log.stock.exchange.repos.LotOffersRepository;
 import ru.er_log.stock.exchange.repos.LotOrdersRepository;
 import ru.er_log.stock.exchange.repos.LotTransactionsRepository;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,69 +46,98 @@ public class StockExchangeService {
         LOG.info("- - - - - - - - - - - - - - - -");
         LOG.info("Preparing to handling deals...");
         try {
-            makeDealsImpl();
+            final Pair<List<LotOrder>, List<LotOffer>> ordersAndOffers = getOrdersAndOffers();
+            final List<LotOrder> orders = ordersAndOffers.getFirst();
+            final List<LotOffer> offers = ordersAndOffers.getSecond();
+            final List<LotTransactions> deals = new ArrayList<>();
+            final List<LotOffer> splitOffersCreated = new ArrayList<>();
+
+            final int totalOrders = orders.size();
+            final int totalOffers = offers.size();
+
+            LOG.info("Handling deals. Total orders lots: {}. Total offers lots: {}", orders.size(), offers.size());
+            makeDealsImpl(orders, offers, deals, splitOffersCreated);
+
+            if (deals.size() > 0) {
+                saveTransactions(deals, splitOffersCreated);
+            }
+
+            int served = deals.size();
+            LOG.info("Handling deals completed. Deals carried out: {}. Not handled order lots: {}. Not handled offer lots: {}",
+                    served, totalOrders - served, totalOffers - served);
         } catch (Exception e) {
             LOG.error("Error while executing scheduled task", e);
         }
     }
 
-    private void makeDealsImpl() {
-        final Pair<List<LotOrder>, List<LotOffer>> ordersAndOffers = getOrdersAndOffers();
-        List<LotOrder> orders = ordersAndOffers.getFirst();
-        List<LotOffer> offers = ordersAndOffers.getSecond();
-        final List<LotTransactions> deals = new ArrayList<>();
-
-        LOG.info("Handling deals. Total orders lots: {}. Total offers lots: {}", orders.size(), offers.size());
-
-        final int totalOrders = orders.size();
-        final int totalOffers = offers.size();
+    /**
+     * Constraints:
+     *  1. Orders must be sorted: desc(price) and then asc(created time)
+     *  2. Offers must be sorted: asc(created time) and then asc(price)
+     */
+    private void makeDealsImpl(
+            List<LotOrder> orders,
+            List<LotOffer> offers,
+            List<LotTransactions> deals,
+            List<LotOffer> splitOffersCreated
+    ) {
         final long timestamp = System.currentTimeMillis();
 
         for (LotOrder order : orders) {
-            Iterator<LotOffer> offerIterator = offers.iterator();
+            BigDecimal leftOrderAmount = order.getAmount();
+            ListIterator<LotOffer> offersIterator = offers.listIterator();
 
-            while (offerIterator.hasNext()) {
-                LotOffer offer = offerIterator.next();
+            while (offersIterator.hasNext()) {
+                LotOffer offer = offersIterator.next();
 
-                // Checks if we find something with the good price for this order lot.
-                // Otherwise, breaks operation because orders are ordered by price.
                 if (offer.getPrice().compareTo(order.getPrice()) > 0) {
-                    continue;
+                    return;
                 }
 
-                // Finds the offer lot with user != user in the order lot.
-                if (offer.getUser().getId().equals(order.getUser().getId())) {
-                    continue;
-                }
+                BigDecimal offerAmount = offer.getAmount();
+                int amountCompare = offerAmount.compareTo(leftOrderAmount);
+                if (amountCompare < 0) { // offer.amount < order.amount
+                    leftOrderAmount = leftOrderAmount.subtract(offerAmount);
+                    deals.add(new LotTransactions(offer, order, timestamp));
 
-                // Makes the deal.
-                deals.add(new LotTransactions(offer, order, timestamp));
-                offerIterator.remove();
-                break;
+                    splitOffersCreated.remove(offer);
+                    offersIterator.remove();
+                } else if (amountCompare > 0) { // offer.amount > order.amount
+                    BigDecimal leftOfferAmount = offerAmount.subtract(leftOrderAmount);
+                    LotOffer leftOffer = new LotOffer(offer.getPrice(), leftOfferAmount, offer.getUser(), offer.getTimestampCreated());
+
+                    splitOffersCreated.add(leftOffer);
+                    offersIterator.set(leftOffer);
+
+                    deals.add(new LotTransactions(offer, order, timestamp));
+                    break;
+                } else { // offer.amount == order.amount
+                    deals.add(new LotTransactions(offer, order, timestamp));
+
+                    splitOffersCreated.remove(offer);
+                    offersIterator.remove();
+                    break;
+                }
             }
         }
-
-        if (deals.size() > 0) {
-            saveTransactions(deals);
-        }
-        outResults(totalOrders, totalOffers, deals.size());
     }
 
     @Transactional
     protected Pair<List<LotOrder>, List<LotOffer>> getOrdersAndOffers() {
         // In sort first parameter happens later.
-        Sort sortOrders = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
+        Sort sortOrders = Sort.by(Sort.Order.asc("timestampCreated"), Sort.Order.desc("price"));
         List<LotOrder> orders = lotOrdersRepository.findByIsActiveTrue(sortOrders);
 
-        Sort sortOffers = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
+        Sort sortOffers = Sort.by(Sort.Order.asc("price"), Sort.Order.asc("timestampCreated"));
         List<LotOffer> offers = lotOffersRepository.findByIsActiveTrue(sortOffers);
 
         return Pair.of(orders, offers);
     }
 
     @Transactional
-    protected void saveTransactions(List<LotTransactions> deals) {
+    protected void saveTransactions(List<LotTransactions> deals, List<LotOffer> splitOffersCreated) {
         lotTransactionsRepository.saveAll(deals);
+        lotOffersRepository.saveAll(splitOffersCreated);
 
         List<LotOrder> orders = deals.stream().map(LotTransactions::getLotOrder).collect(Collectors.toList());
         orders.forEach(e -> e.setActive(false));
@@ -116,13 +146,5 @@ public class StockExchangeService {
         List<LotOffer> offers = deals.stream().map(LotTransactions::getLotOffer).collect(Collectors.toList());
         offers.forEach(e -> e.setActive(false));
         lotOffersRepository.saveAll(offers);
-    }
-
-    private void outResults(int totalOrders, int totalOffers, int served) {
-        int notHandledOrders = totalOrders - served;
-        int notHandledOffers = totalOffers - served;
-        LOG.info("Handling deals completed. " +
-                        "Deals carried out: {}. Not handled order lots: {}. Not handled offer lots: {}",
-                served, notHandledOrders, notHandledOffers);
     }
 }

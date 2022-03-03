@@ -43,6 +43,7 @@ public class LotOffer {
 
     public LotOffer(BigDecimal price, BigDecimal amount, User user, long timestampCreated) {
         this.price = price;
+        this.amount = amount;
         this.user = user;
         this.timestampCreated = timestampCreated;
         this.isActive = true;
