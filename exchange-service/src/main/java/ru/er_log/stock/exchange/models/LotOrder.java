@@ -24,6 +24,9 @@ public class LotOrder {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private BigDecimal amount;
+
     @ManyToOne(cascade = {CascadeType.REFRESH}, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -50,6 +53,10 @@ public class LotOrder {
 
     public BigDecimal getPrice() {
         return price;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
     }
 
     public User getUser() {

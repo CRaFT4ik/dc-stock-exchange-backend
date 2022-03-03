@@ -1,5 +1,6 @@
 package ru.er_log.stock.exchange.models;
 
+import org.hibernate.annotations.Check;
 import ru.er_log.stock.auth.models.User;
 
 import javax.persistence.CascadeType;
@@ -24,6 +25,9 @@ public class LotOffer {
     @Column(nullable = false)
     private BigDecimal price;
 
+    @Column(nullable = false)
+    private BigDecimal amount;
+
     @ManyToOne(cascade = {CascadeType.REFRESH}, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -37,7 +41,7 @@ public class LotOffer {
     public LotOffer() {
     }
 
-    public LotOffer(BigDecimal price, User user, long timestampCreated) {
+    public LotOffer(BigDecimal price, BigDecimal amount, User user, long timestampCreated) {
         this.price = price;
         this.user = user;
         this.timestampCreated = timestampCreated;
@@ -50,6 +54,10 @@ public class LotOffer {
 
     public BigDecimal getPrice() {
         return price;
+    }
+
+    public BigDecimal getAmount() {
+        return amount;
     }
 
     public User getUser() {
