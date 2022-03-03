@@ -4,6 +4,11 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+*.env
+*.p12
+
+/docker-compose-local.yml
+/start.bat
 
 ### STS ###
 .apt_generated
