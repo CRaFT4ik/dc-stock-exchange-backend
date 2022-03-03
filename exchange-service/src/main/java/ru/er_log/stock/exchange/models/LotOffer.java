@@ -14,8 +14,8 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "sale_lots")
-public class LotSale {
+@Table(name = "lot_offers")
+public class LotOffer {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue
@@ -34,10 +34,10 @@ public class LotSale {
     @Column(name = "is_active", nullable = false)
     private boolean isActive;
 
-    public LotSale() {
+    public LotOffer() {
     }
 
-    public LotSale(BigDecimal price, User user, long timestampCreated) {
+    public LotOffer(BigDecimal price, User user, long timestampCreated) {
         this.price = price;
         this.user = user;
         this.timestampCreated = timestampCreated;

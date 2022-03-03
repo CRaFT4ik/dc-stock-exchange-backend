@@ -1,7 +1,7 @@
 package ru.er_log.stock.exchange.pojos.entities;
 
-import ru.er_log.stock.exchange.models.LotPurchase;
-import ru.er_log.stock.exchange.models.LotSale;
+import ru.er_log.stock.exchange.models.LotOrder;
+import ru.er_log.stock.exchange.models.LotOffer;
 
 import java.math.BigDecimal;
 
@@ -10,13 +10,13 @@ public class Lot {
     public final long timestampCreated;
     public final User owner;
 
-    public Lot(LotPurchase source) {
+    public Lot(LotOrder source) {
         this.price = source.getPrice();
         this.timestampCreated = source.getTimestampCreated();
         this.owner = new User(source.getUser());
     }
 
-    public Lot(LotSale source) {
+    public Lot(LotOffer source) {
         this.price = source.getPrice();
         this.timestampCreated = source.getTimestampCreated();
         this.owner = new User(source.getUser());

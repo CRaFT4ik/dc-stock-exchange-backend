@@ -5,9 +5,9 @@ This is the backend part of the whole project, which works with the Spring frame
 
 ### Task
 Electronic stock exchange. Available operations:
-- put a lot for sale at the price `Psl`
-- register request to buy at the price of `Ppr`
+- put an offer lot for sale at the price `P_off`
+- register request to buy (create order) at the price of `P_ord`
 - get a list of offers
 - to make a deal (sell or buy)
 
-Transactions are performed if there are offers with `Psl` <= `Ppr`
+Transactions are performed if there are offers with `P_off` <= `P_ord`

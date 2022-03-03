@@ -8,12 +8,12 @@ import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.er_log.stock.exchange.models.DealsByLots;
-import ru.er_log.stock.exchange.models.LotPurchase;
-import ru.er_log.stock.exchange.models.LotSale;
-import ru.er_log.stock.exchange.repos.DealsByLotsRepository;
-import ru.er_log.stock.exchange.repos.LotPurchaseRepository;
-import ru.er_log.stock.exchange.repos.LotSaleRepository;
+import ru.er_log.stock.exchange.models.LotOffer;
+import ru.er_log.stock.exchange.models.LotOrder;
+import ru.er_log.stock.exchange.models.LotTransactions;
+import ru.er_log.stock.exchange.repos.LotOffersRepository;
+import ru.er_log.stock.exchange.repos.LotOrdersRepository;
+import ru.er_log.stock.exchange.repos.LotTransactionsRepository;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,14 +25,20 @@ public class StockExchangeService {
 
     private final Logger LOG = LoggerFactory.getLogger(StockExchangeService.class);
 
-    @Autowired
-    LotSaleRepository lotSaleRepository;
+    private final LotOffersRepository lotOffersRepository;
+    private final LotOrdersRepository lotOrdersRepository;
+    private final LotTransactionsRepository lotTransactionsRepository;
 
     @Autowired
-    LotPurchaseRepository lotPurchaseRepository;
-
-    @Autowired
-    DealsByLotsRepository dealsByLotsRepository;
+    public StockExchangeService(
+            LotOffersRepository lotOffersRepository,
+            LotOrdersRepository lotOrdersRepository,
+            LotTransactionsRepository lotTransactionsRepository
+    ) {
+        this.lotOffersRepository = lotOffersRepository;
+        this.lotOrdersRepository = lotOrdersRepository;
+        this.lotTransactionsRepository = lotTransactionsRepository;
+    }
 
     @Scheduled(initialDelay = 10 * 1000, fixedDelay = 15 * 1000)
     public void makeDeals() {
@@ -46,37 +52,37 @@ public class StockExchangeService {
     }
 
     private void makeDealsImpl() {
-        final Pair<List<LotPurchase>, List<LotSale>> purchasesAndSales = getPurchasesAndSales();
-        List<LotPurchase> purchases = purchasesAndSales.getFirst();
-        List<LotSale> sales = purchasesAndSales.getSecond();
-        final List<DealsByLots> deals = new ArrayList<>();
+        final Pair<List<LotOrder>, List<LotOffer>> ordersAndOffers = getOrdersAndOffers();
+        List<LotOrder> orders = ordersAndOffers.getFirst();
+        List<LotOffer> offers = ordersAndOffers.getSecond();
+        final List<LotTransactions> deals = new ArrayList<>();
 
-        LOG.info("Handling deals. Total purchase lots: {}. Total sale lots: {}", purchases.size(), sales.size());
+        LOG.info("Handling deals. Total orders lots: {}. Total offers lots: {}", orders.size(), offers.size());
 
-        final int totalPurchases = purchases.size();
-        final int totalSales = sales.size();
+        final int totalOrders = orders.size();
+        final int totalOffers = offers.size();
         final long timestamp = System.currentTimeMillis();
 
-        for (LotPurchase purchase : purchases) {
-            Iterator<LotSale> saleIterator = sales.iterator();
+        for (LotOrder order : orders) {
+            Iterator<LotOffer> offerIterator = offers.iterator();
 
-            while (saleIterator.hasNext()) {
-                LotSale sale = saleIterator.next();
+            while (offerIterator.hasNext()) {
+                LotOffer offer = offerIterator.next();
 
-                // Checks if we find something with the good price for this purchase lot.
-                // Otherwise, breaks operation because purchases are ordered by price.
-                if (sale.getPrice().compareTo(purchase.getPrice()) > 0) {
+                // Checks if we find something with the good price for this order lot.
+                // Otherwise, breaks operation because orders are ordered by price.
+                if (offer.getPrice().compareTo(order.getPrice()) > 0) {
                     continue;
                 }
 
-                // Finds the sale lot with user != user in the purchase lot.
-                if (sale.getUser().getId().equals(purchase.getUser().getId())) {
+                // Finds the offer lot with user != user in the order lot.
+                if (offer.getUser().getId().equals(order.getUser().getId())) {
                     continue;
                 }
 
                 // Makes the deal.
-                deals.add(new DealsByLots(sale, purchase, timestamp));
-                saleIterator.remove();
+                deals.add(new LotTransactions(offer, order, timestamp));
+                offerIterator.remove();
                 break;
             }
         }
@@ -84,39 +90,39 @@ public class StockExchangeService {
         if (deals.size() > 0) {
             saveTransactions(deals);
         }
-        outResults(totalPurchases, totalSales, deals.size());
+        outResults(totalOrders, totalOffers, deals.size());
     }
 
     @Transactional
-    protected Pair<List<LotPurchase>, List<LotSale>> getPurchasesAndSales() {
+    protected Pair<List<LotOrder>, List<LotOffer>> getOrdersAndOffers() {
         // In sort first parameter happens later.
-        Sort sortPurchases = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
-        List<LotPurchase> purchases = lotPurchaseRepository.findByIsActiveTrue(sortPurchases);
+        Sort sortOrders = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
+        List<LotOrder> orders = lotOrdersRepository.findByIsActiveTrue(sortOrders);
 
-        Sort sortSales = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
-        List<LotSale> sales = lotSaleRepository.findByIsActiveTrue(sortSales);
+        Sort sortOffers = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
+        List<LotOffer> offers = lotOffersRepository.findByIsActiveTrue(sortOffers);
 
-        return Pair.of(purchases, sales);
+        return Pair.of(orders, offers);
     }
 
     @Transactional
-    protected void saveTransactions(List<DealsByLots> deals) {
-        dealsByLotsRepository.saveAll(deals);
+    protected void saveTransactions(List<LotTransactions> deals) {
+        lotTransactionsRepository.saveAll(deals);
 
-        List<LotPurchase> purchases = deals.stream().map(DealsByLots::getLotPurchase).collect(Collectors.toList());
-        purchases.forEach(e -> e.setActive(false));
-        lotPurchaseRepository.saveAll(purchases);
+        List<LotOrder> orders = deals.stream().map(LotTransactions::getLotOrder).collect(Collectors.toList());
+        orders.forEach(e -> e.setActive(false));
+        lotOrdersRepository.saveAll(orders);
 
-        List<LotSale> sales = deals.stream().map(DealsByLots::getLotSale).collect(Collectors.toList());
-        sales.forEach(e -> e.setActive(false));
-        lotSaleRepository.saveAll(sales);
+        List<LotOffer> offers = deals.stream().map(LotTransactions::getLotOffer).collect(Collectors.toList());
+        offers.forEach(e -> e.setActive(false));
+        lotOffersRepository.saveAll(offers);
     }
 
-    private void outResults(int totalPurchases, int totalSales, int served) {
-        int notHandledPurchases = totalPurchases - served;
-        int notHandledSales = totalSales - served;
+    private void outResults(int totalOrders, int totalOffers, int served) {
+        int notHandledOrders = totalOrders - served;
+        int notHandledOffers = totalOffers - served;
         LOG.info("Handling deals completed. " +
-                        "Deals carried out: {}. Not handled purchase lots: {}. Not handled sale lots: {}",
-                served, notHandledPurchases, notHandledSales);
+                        "Deals carried out: {}. Not handled order lots: {}. Not handled offer lots: {}",
+                served, notHandledOrders, notHandledOffers);
     }
 }

@@ -3,15 +3,15 @@ package ru.er_log.stock.exchange.repos;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import ru.er_log.stock.exchange.models.LotPurchase;
+import ru.er_log.stock.exchange.models.LotOffer;
 
 import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface LotPurchaseRepository extends JpaRepository<LotPurchase, UUID> {
+public interface LotOffersRepository extends JpaRepository<LotOffer, UUID> {
 
-    List<LotPurchase> findByIsActiveTrue();
+    List<LotOffer> findByIsActiveTrue();
 
-    List<LotPurchase> findByIsActiveTrue(Sort sort);
+    List<LotOffer> findByIsActiveTrue(Sort sort);
 }
