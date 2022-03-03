@@ -41,7 +41,10 @@ public class StockExchangeService {
         this.lotTransactionsRepository = lotTransactionsRepository;
     }
 
-    @Scheduled(initialDelay = 10 * 1000, fixedDelay = 15 * 1000)
+    /**
+     * Every 30 seconds.
+     */
+    @Scheduled(initialDelay = 10 * 1000, fixedDelay = 30 * 1000)
     public void makeDeals() {
         LOG.info("- - - - - - - - - - - - - - - -");
         LOG.info("Preparing to handling deals...");

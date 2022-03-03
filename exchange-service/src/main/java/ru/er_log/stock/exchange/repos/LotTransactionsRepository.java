@@ -8,4 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface LotTransactionsRepository extends JpaRepository<LotTransactions, UUID> {
+    long deleteByLotOffer_User_IdAndLotOrder_User_Id(Long lotOfferUserId, Long lotOrderUserId);
 }

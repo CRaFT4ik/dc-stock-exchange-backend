@@ -10,6 +10,9 @@ import java.util.UUID;
 
 @Repository
 public interface LotOffersRepository extends JpaRepository<LotOffer, UUID> {
+    long deleteByUser_Id(Long id);
+
+    long countByIsActiveTrue();
 
     List<LotOffer> findByIsActiveTrue();
 

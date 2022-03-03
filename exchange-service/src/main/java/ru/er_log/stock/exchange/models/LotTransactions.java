@@ -23,11 +23,11 @@ public class LotTransactions {
     @GeneratedValue
     private UUID id;
 
-    @OneToOne(cascade = CascadeType.REFRESH, optional = false)
+    @OneToOne(cascade = CascadeType.ALL, optional = false, orphanRemoval = true)
     @JoinColumn(name = "lot_offer_id", nullable = false)
     private LotOffer lotOffer;
 
-    @OneToOne(cascade = CascadeType.REFRESH, optional = false)
+    @OneToOne(cascade = CascadeType.ALL, optional = false, orphanRemoval = true)
     @JoinColumn(name = "lot_order_id", nullable = false)
     private LotOrder lotOrder;
 
