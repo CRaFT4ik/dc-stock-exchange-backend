@@ -12,34 +12,33 @@ import javax.persistence.UniqueConstraint;
 import java.util.UUID;
 
 @Entity
-@Table(name = "deals_by_lots",
+@Table(name = "lot_transactions",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = "lot_sale_id"),
-                @UniqueConstraint(columnNames = "lot_purchase_id")
+                @UniqueConstraint(columnNames = {"lot_offer_id", "lot_order_id"})
         })
-public class DealsByLots {
+public class LotTransactions {
     @Id
     @Column(name = "id", nullable = false)
     @GeneratedValue
     private UUID id;
 
-    @OneToOne(cascade = CascadeType.REFRESH, optional = false)
-    @JoinColumn(name = "lot_sale_id", nullable = false)
-    private LotSale lotSale;
+    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "lot_offer_id", nullable = false)
+    private LotOffer lotOffer;
 
-    @OneToOne(cascade = CascadeType.REFRESH, optional = false)
-    @JoinColumn(name = "lot_purchase_id", nullable = false)
-    private LotPurchase lotPurchase;
+    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    @JoinColumn(name = "lot_order_id", nullable = false)
+    private LotOrder lotOrder;
 
     @Column(name = "timestamp_created", nullable = false)
     private long timestampCreated;
 
-    public DealsByLots() {
+    public LotTransactions() {
     }
 
-    public DealsByLots(LotSale lotSale, LotPurchase lotPurchase, long timestampCreated) {
-        this.lotSale = lotSale;
-        this.lotPurchase = lotPurchase;
+    public LotTransactions(LotOffer lotOffer, LotOrder lotOrder, long timestampCreated) {
+        this.lotOffer = lotOffer;
+        this.lotOrder = lotOrder;
         this.timestampCreated = timestampCreated;
     }
 
@@ -47,12 +46,12 @@ public class DealsByLots {
         return id;
     }
 
-    public LotPurchase getLotPurchase() {
-        return lotPurchase;
+    public LotOrder getLotOrder() {
+        return lotOrder;
     }
 
-    public LotSale getLotSale() {
-        return lotSale;
+    public LotOffer getLotOffer() {
+        return lotOffer;
     }
 
     public long getTimestampCreated() {
