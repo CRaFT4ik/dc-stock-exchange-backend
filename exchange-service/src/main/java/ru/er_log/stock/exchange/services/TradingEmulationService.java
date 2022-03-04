@@ -28,7 +28,7 @@ public class TradingEmulationService {
 
     private final Logger LOG = LoggerFactory.getLogger(TradingEmulationService.class);
 
-    private final User serviceUser;
+    private final User offersServiceUser, ordersServiceUser;
     private final LotOffersRepository lotOffersRepository;
     private final LotOrdersRepository lotOrdersRepository;
     private final LotTransactionsRepository lotTransactionsRepository;
@@ -36,8 +36,8 @@ public class TradingEmulationService {
     private final EmulationLotGenerator offersGenerator;
     private final EmulationLotGenerator ordersGenerator;
 
-    private static final int totalGenerated = 50;
-    private static final int triggerGenerationLotsCount = 30;
+    private static final int totalGenerated = 100;
+    private static final int triggerGenerationLotsCount = 60;
 
     @Autowired
     public TradingEmulationService(
@@ -50,9 +50,11 @@ public class TradingEmulationService {
         this.lotOrdersRepository = lotOrdersRepository;
         this.lotTransactionsRepository = lotTransactionsRepository;
 
-        this.serviceUser = userRepository.findByUsername("demo_service_bot").orElse(null);
-        this.offersGenerator = new EmulationLotGenerator(serviceUser, 44000 - 5000, 0.24, 30);
-        this.ordersGenerator = new EmulationLotGenerator(serviceUser, 44000 + 5000, 0.21, 20);
+        this.offersServiceUser = userRepository.findByUsername("service_bot_1").orElse(null);
+        this.ordersServiceUser = userRepository.findByUsername("service_bot_2").orElse(null);
+
+        this.offersGenerator = new EmulationLotGenerator(offersServiceUser, 44000 - 5000, 0.24, 30);
+        this.ordersGenerator = new EmulationLotGenerator(ordersServiceUser, 44000 + 5000, 0.21, 20);
     }
 
     /**
@@ -62,6 +64,7 @@ public class TradingEmulationService {
     @Scheduled(initialDelay = 20 * 1000, fixedDelay = 15 * 60 * 1000)
     public void updateFakeData() {
         try {
+            LOG.info("- - - - - - - - - - - -");
             LOG.info("Updating fake data ...");
 
             List<LotOrder> orders = generateOrdersIfNeeded();
@@ -84,22 +87,22 @@ public class TradingEmulationService {
     public void dailyUpdateFakeData() {
         try {
             LOG.info("Daily cleaning of fake data ...");
-            cleanFakeData(serviceUser.getId());
+            cleanFakeData(offersServiceUser.getId(), ordersServiceUser.getId());
         } catch (Exception e) {
             LOG.error("Error while executing scheduled task", e);
         }
     }
 
     // @Transactional
-    protected void cleanFakeData(long serviceUserId) {
+    protected void cleanFakeData(long offersServiceUserId, long ordersServiceUserId) {
         long deleted = lotTransactionsRepository.deleteByLotOffer_User_IdAndLotOrder_User_Id(
-                serviceUserId, serviceUserId);
+                offersServiceUserId, ordersServiceUserId);
         LOG.info("Deleted {} old fake transactions from database", deleted);
 
-        deleted = lotOffersRepository.deleteByUser_Id(serviceUserId);
+        deleted = lotOffersRepository.deleteByUser_Id(offersServiceUserId);
         LOG.info("Deleted {} old fake active offer lots", deleted);
 
-        deleted = lotOrdersRepository.deleteByUser_Id(serviceUserId);
+        deleted = lotOrdersRepository.deleteByUser_Id(ordersServiceUserId);
         LOG.info("Deleted {} old fake active order lots", deleted);
     }
 
@@ -112,7 +115,7 @@ public class TradingEmulationService {
     }
 
     private List<LotOrder> generateOrdersIfNeeded() {
-        long existCount = lotOffersRepository.countByIsActiveTrue();
+        long existCount = lotOrdersRepository.countByIsActiveTrue();
         if (existCount > triggerGenerationLotsCount) return List.of();
 
         int neededCount = (int) (totalGenerated - existCount);

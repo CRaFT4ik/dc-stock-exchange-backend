@@ -12,6 +12,8 @@ import java.util.UUID;
 public interface LotOrdersRepository extends JpaRepository<LotOrder, UUID> {
     long deleteByUser_Id(Long id);
 
+    long countByIsActiveTrue();
+
     List<LotOrder> findByIsActiveTrue();
 
     List<LotOrder> findByIsActiveTrue(Sort sort);

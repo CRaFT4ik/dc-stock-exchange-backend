@@ -20,8 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
-import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +46,7 @@ public class StockExchangeService {
     /**
      * Every 30 seconds.
      */
-    @Scheduled(initialDelay = 0 * 1000, fixedDelay = 30 * 1000)
+    @Scheduled(initialDelay = 5 * 1000, fixedDelay = 30 * 1000)
     public void makeDeals() {
         LOG.info("- - - - - - - - - - - - - - - -");
         LOG.info("Preparing to handling deals...");
@@ -57,20 +55,22 @@ public class StockExchangeService {
             final List<LotOrder> orders = ordersAndOffers.getFirst();
             final List<LotOffer> offers = ordersAndOffers.getSecond();
             final List<LotTransactions> deals = new ArrayList<>();
-            final List<LotOffer> splitOffersCreated = new ArrayList<>();
+
+            final List<LotOrder> createdOrders = new ArrayList<>();
+            final List<LotOffer> createdOffers = new ArrayList<>();
 
             final int totalOrders = orders.size();
             final int totalOffers = offers.size();
 
             LOG.info("Handling deals. Total orders lots: {}. Total offers lots: {}", totalOrders, totalOffers);
-            makeDealsImpl(orders, offers, deals, splitOffersCreated);
+            makeDealsImpl(orders, offers, deals, createdOrders, createdOffers);
 
             if (deals.size() > 0) {
-                saveTransactions(deals, splitOffersCreated);
+                saveTransactions(deals, createdOrders, createdOffers);
             }
 
             int served = deals.size();
-            LOG.info("Handling deals completed. Transactions made: {}. Not handled offer lots: {}", served, totalOffers - served);
+            LOG.info("Handling deals completed. Transactions made: {}", served);
         } catch (Exception e) {
             LOG.error("Error while executing scheduled task", e);
         }
@@ -85,7 +85,8 @@ public class StockExchangeService {
             List<LotOrder> orders,
             List<LotOffer> offers,
             List<LotTransactions> deals,
-            List<LotOffer> splitOffersCreated
+            List<LotOrder> createdOrders,
+            List<LotOffer> createdOffers
     ) {
         final long timestamp = System.currentTimeMillis();
 
@@ -97,28 +98,37 @@ public class StockExchangeService {
                 LotOffer offer = offersIterator.next();
 
                 if (offer.getPrice().compareTo(order.getPrice()) > 0) {
-                    return;
+                    break;
+                } else if (offer.getUser().getId().equals(order.getUser().getId())) {
+                    continue;
                 }
-//                else if (offer.getUser().getId().equals(order.getUser().getId())) {
-//                    continue;
-//                }
 
-                splitOffersCreated.remove(offer);
+                createdOrders.remove(order);
+                createdOffers.remove(offer);
 
                 BigDecimal offerAmount = offer.getAmount();
                 int amountCompare = offerAmount.compareTo(leftOrderAmount);
                 if (amountCompare < 0) { // offer.amount < order.amount
+                    // Creating left part of order.
                     leftOrderAmount = leftOrderAmount.subtract(offerAmount);
+                    LotOrder leftOrder = new LotOrder(order.getPrice(), leftOrderAmount, order.getUser(), order.getTimestampCreated());
+                    createdOrders.add(leftOrder);
+
+                    // Handling current order.
+                    order.setAmount(offerAmount);
                     deals.add(new LotTransactions(offer, order, timestamp));
 
+                    order = leftOrder;
                     offersIterator.remove();
                 } else if (amountCompare > 0) { // offer.amount > order.amount
+                    // Creating left part of offer.
                     BigDecimal leftOfferAmount = offerAmount.subtract(leftOrderAmount);
                     LotOffer leftOffer = new LotOffer(offer.getPrice(), leftOfferAmount, offer.getUser(), offer.getTimestampCreated());
-
-                    splitOffersCreated.add(leftOffer);
+                    createdOffers.add(leftOffer);
                     offersIterator.set(leftOffer);
 
+                    // Handling current offer.
+                    offer.setAmount(leftOrderAmount);
                     deals.add(new LotTransactions(offer, order, timestamp));
                     break;
                 } else { // offer.amount == order.amount
@@ -144,7 +154,7 @@ public class StockExchangeService {
     }
 
     // @Transactional (wtf not working)
-    protected void saveTransactions(List<LotTransactions> deals, List<LotOffer> splitOffersCreated) {
+    protected void saveTransactions(List<LotTransactions> deals, List<LotOrder> createdOrders, List<LotOffer> createdOffers) {
         Set<LotOrder> orders = deals.stream().map(LotTransactions::getLotOrder).collect(Collectors.toSet());
         orders.forEach(e -> e.setActive(false));
         lotOrdersRepository.saveAll(orders);
@@ -156,7 +166,8 @@ public class StockExchangeService {
         List<String> aaa = orders.stream().map(obj -> obj.getId().toString()).sorted().collect(Collectors.toList());
         List<String> bbb = offers.stream().map(obj -> obj.getId().toString()).sorted().collect(Collectors.toList());
 
-        lotOffersRepository.saveAll(splitOffersCreated);
+        lotOrdersRepository.saveAll(createdOrders);
+        lotOffersRepository.saveAll(createdOffers);
         lotTransactionsRepository.saveAll(deals);
     }
 }

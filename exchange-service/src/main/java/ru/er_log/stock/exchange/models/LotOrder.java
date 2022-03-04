@@ -60,6 +60,10 @@ public class LotOrder {
         return amount;
     }
 
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
+
     public User getUser() {
         return user;
     }
