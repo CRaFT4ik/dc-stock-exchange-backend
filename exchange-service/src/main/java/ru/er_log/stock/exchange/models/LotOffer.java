@@ -1,6 +1,5 @@
 package ru.er_log.stock.exchange.models;
 
-import org.hibernate.annotations.Check;
 import ru.er_log.stock.auth.models.User;
 
 import javax.persistence.CascadeType;

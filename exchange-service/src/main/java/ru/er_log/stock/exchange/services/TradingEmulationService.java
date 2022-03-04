@@ -23,6 +23,7 @@ import java.util.Random;
 import java.util.stream.DoubleStream;
 
 @Service
+@Transactional
 public class TradingEmulationService {
 
     private final Logger LOG = LoggerFactory.getLogger(TradingEmulationService.class);
@@ -57,15 +58,19 @@ public class TradingEmulationService {
     /**
      * Every 15 minutes.
      */
+    // @Transactional
     @Scheduled(initialDelay = 20 * 1000, fixedDelay = 15 * 60 * 1000)
-    @Transactional
     public void updateFakeData() {
         try {
+            LOG.info("Updating fake data ...");
+
             List<LotOrder> orders = generateOrdersIfNeeded();
             List<LotOffer> offers = generateOffersIfNeeded();
 
             lotOrdersRepository.saveAll(orders);
             lotOffersRepository.saveAll(offers);
+
+            LOG.info("Added {} fake orders and {} fake offers", orders.size(), offers.size());
         } catch (Exception e) {
             LOG.error("Error while executing scheduled task", e);
         }
@@ -78,13 +83,14 @@ public class TradingEmulationService {
     @Scheduled(cron = "0 0 1 * * ?")
     public void dailyUpdateFakeData() {
         try {
+            LOG.info("Daily cleaning of fake data ...");
             cleanFakeData(serviceUser.getId());
         } catch (Exception e) {
             LOG.error("Error while executing scheduled task", e);
         }
     }
 
-    @Transactional
+    // @Transactional
     protected void cleanFakeData(long serviceUserId) {
         long deleted = lotTransactionsRepository.deleteByLotOffer_User_IdAndLotOrder_User_Id(
                 serviceUserId, serviceUserId);
@@ -113,7 +119,7 @@ public class TradingEmulationService {
         return ordersGenerator.generateOrders(neededCount);
     }
 
-    @Transactional
+    // @Transactional
     protected Pair<List<LotOrder>, List<LotOffer>> getOrdersAndOffers() {
         // In sort first parameter happens later.
         Sort sortOrders = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));

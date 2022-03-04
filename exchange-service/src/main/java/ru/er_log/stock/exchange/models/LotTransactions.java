@@ -14,8 +14,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "lot_transactions",
         uniqueConstraints = {
-                @UniqueConstraint(columnNames = "lot_offer_id"),
-                @UniqueConstraint(columnNames = "lot_order_id")
+                @UniqueConstraint(columnNames = {"lot_offer_id", "lot_order_id"})
         })
 public class LotTransactions {
     @Id
