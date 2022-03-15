@@ -1,6 +1,6 @@
-package ru.er_log.stock.exchange.models;
+package ru.er_log.stock.exchange.enities;
 
-import ru.er_log.stock.auth.models.User;
+import ru.er_log.stock.auth.enities.User;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;

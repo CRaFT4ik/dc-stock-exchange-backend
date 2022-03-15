@@ -6,7 +6,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.er_log.stock.auth.models.User;
+import ru.er_log.stock.auth.enities.User;
 import ru.er_log.stock.auth.repos.UserRepository;
 
 @Service

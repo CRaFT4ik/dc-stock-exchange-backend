@@ -1,6 +1,8 @@
 package ru.er_log.stock.exchange.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -10,26 +12,26 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import ru.er_log.stock.auth.models.User;
+import ru.er_log.stock.auth.enities.User;
 import ru.er_log.stock.auth.pojos.MessageResponse;
 import ru.er_log.stock.auth.repos.UserRepository;
 import ru.er_log.stock.auth.services.UserDetailsServiceImpl;
-import ru.er_log.stock.exchange.models.LotOffer;
-import ru.er_log.stock.exchange.models.LotOrder;
-import ru.er_log.stock.exchange.models.LotTransactions;
-import ru.er_log.stock.exchange.pojos.ActiveLotsResponse;
-import ru.er_log.stock.exchange.pojos.DealsResponse;
-import ru.er_log.stock.exchange.pojos.LotDealRequest;
+import ru.er_log.stock.exchange.enities.LotOffer;
+import ru.er_log.stock.exchange.enities.LotOrder;
+import ru.er_log.stock.exchange.pojos.Lot;
+import ru.er_log.stock.exchange.pojos.OrderBookResponse;
 import ru.er_log.stock.exchange.repos.LotOffersRepository;
 import ru.er_log.stock.exchange.repos.LotOrdersRepository;
 import ru.er_log.stock.exchange.repos.LotTransactionsRepository;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
-@RequestMapping("/api/exchange")
+@RequestMapping("/api/v1/exchange")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class StockExchangeController {
 
@@ -48,12 +50,11 @@ public class StockExchangeController {
     @Autowired
     LotTransactionsRepository lotTransactionsRepository;
 
-    @PostMapping("/buy")
+    @PostMapping("/order")
     @PreAuthorize("isFullyAuthenticated()")
-    public ResponseEntity<?> addLotBuy(HttpServletRequest request, @RequestBody LotDealRequest dealRequest) {
+    public ResponseEntity<?> createOrder(HttpServletRequest request, @RequestBody Lot creatingLot) {
 //        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 //        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
         try {
             String username = request.getRemoteUser();
             if (username == null) {
@@ -63,8 +64,8 @@ public class StockExchangeController {
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Error, user with name '" + username + "' is not found"));
 
-            LotOrder lotOrder = new LotOrder(dealRequest.getPrice(), dealRequest.getAmount(), currentUser,
-                    System.currentTimeMillis());
+            LotOrder lotOrder = new LotOrder(
+                    creatingLot.price, creatingLot.amount, currentUser, System.currentTimeMillis());
             lotOrdersRepository.save(lotOrder);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -73,9 +74,9 @@ public class StockExchangeController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @PostMapping("/sell")
+    @PostMapping("/offer")
     @PreAuthorize("isFullyAuthenticated()")
-    public ResponseEntity<?> addLotSell(HttpServletRequest request, @RequestBody LotDealRequest dealRequest) {
+    public ResponseEntity<?> createOffer(HttpServletRequest request, @RequestBody Lot creatingLot) {
         try {
             String username = request.getRemoteUser();
             if (username == null) {
@@ -85,8 +86,8 @@ public class StockExchangeController {
             User currentUser = userRepository.findByUsername(username)
                     .orElseThrow(() -> new RuntimeException("Error, user with name '" + username + "' is not found"));
 
-            LotOffer lotOffer = new LotOffer(dealRequest.getPrice(), dealRequest.getAmount(), currentUser,
-                    System.currentTimeMillis());
+            LotOffer lotOffer = new LotOffer(
+                    creatingLot.price, creatingLot.amount, currentUser, System.currentTimeMillis());
             lotOffersRepository.save(lotOffer);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
@@ -95,20 +96,26 @@ public class StockExchangeController {
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
-    @GetMapping("/deals")
-    public ResponseEntity<?> showAllDeals() {
-        List<LotTransactions> lotDealsByLots = lotTransactionsRepository.findAll();
+    @GetMapping("/order_book")
+    public ResponseEntity<?> fetchOrderBook(@RequestParam(defaultValue = "100") Integer limit) {
+        try {
+            var page = PageRequest.of(0, Math.min(limit, 1000));
 
-        var responseBody = new DealsResponse(lotDealsByLots);
-        return ResponseEntity.ok(responseBody);
-    }
+            var ordersFuture = lotOrdersRepository.findOrdersAmountByThisPrice(page);
+            var offersFuture = lotOffersRepository.findOffersAmountByThisPrice(page);
 
-    @GetMapping("/lots")
-    public ResponseEntity<?> showActiveLots() {
-        List<LotOrder> lotOrders = lotOrdersRepository.findByIsActiveTrue();
-        List<LotOffer> lotOffers = lotOffersRepository.findByIsActiveTrue();
+            List<Lot> orders = ordersFuture.get();
+            List<Lot> offers = offersFuture.get();
 
-        var responseBody = new ActiveLotsResponse(lotOrders, lotOffers);
-        return ResponseEntity.ok(responseBody);
+            int minIndex = Math.min(orders.size(), offers.size());
+            OrderBookResponse response = new OrderBookResponse(
+                    orders.subList(0, minIndex),
+                    offers.subList(0, minIndex)
+            );
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new MessageResponse(e.getMessage()));
+        }
     }
 }

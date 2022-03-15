@@ -8,10 +8,10 @@ import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.er_log.stock.auth.models.User;
+import ru.er_log.stock.auth.enities.User;
 import ru.er_log.stock.auth.repos.UserRepository;
-import ru.er_log.stock.exchange.models.LotOffer;
-import ru.er_log.stock.exchange.models.LotOrder;
+import ru.er_log.stock.exchange.enities.LotOffer;
+import ru.er_log.stock.exchange.enities.LotOrder;
 import ru.er_log.stock.exchange.repos.LotOffersRepository;
 import ru.er_log.stock.exchange.repos.LotOrdersRepository;
 import ru.er_log.stock.exchange.repos.LotTransactionsRepository;
@@ -120,18 +120,6 @@ public class TradingEmulationService {
 
         int neededCount = (int) (totalGenerated - existCount);
         return ordersGenerator.generateOrders(neededCount);
-    }
-
-    // @Transactional
-    protected Pair<List<LotOrder>, List<LotOffer>> getOrdersAndOffers() {
-        // In sort first parameter happens later.
-        Sort sortOrders = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
-        List<LotOrder> orders = lotOrdersRepository.findByIsActiveTrue(sortOrders);
-
-        Sort sortOffers = Sort.by(Sort.Order.desc("price"), Sort.Order.asc("timestampCreated"));
-        List<LotOffer> offers = lotOffersRepository.findByIsActiveTrue(sortOffers);
-
-        return Pair.of(orders, offers);
     }
 
     private static class EmulationLotGenerator {

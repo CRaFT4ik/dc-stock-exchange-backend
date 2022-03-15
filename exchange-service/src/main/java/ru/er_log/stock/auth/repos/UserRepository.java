@@ -2,7 +2,7 @@ package ru.er_log.stock.auth.repos;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import ru.er_log.stock.auth.models.User;
+import ru.er_log.stock.auth.enities.User;
 
 import java.util.Optional;
 
