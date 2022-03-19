@@ -8,9 +8,9 @@ import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.er_log.stock.exchange.models.LotOffer;
-import ru.er_log.stock.exchange.models.LotOrder;
-import ru.er_log.stock.exchange.models.LotTransactions;
+import ru.er_log.stock.exchange.enities.LotOffer;
+import ru.er_log.stock.exchange.enities.LotOrder;
+import ru.er_log.stock.exchange.enities.LotTransactions;
 import ru.er_log.stock.exchange.repos.LotOffersRepository;
 import ru.er_log.stock.exchange.repos.LotOrdersRepository;
 import ru.er_log.stock.exchange.repos.LotTransactionsRepository;
@@ -62,7 +62,7 @@ public class StockExchangeService {
             final int totalOrders = orders.size();
             final int totalOffers = offers.size();
 
-            LOG.info("Handling deals. Total orders lots: {}. Total offers lots: {}", totalOrders, totalOffers);
+            LOG.info("Handling deals. Total order lots: {}. Total offer lots: {}", totalOrders, totalOffers);
             makeDealsImpl(orders, offers, deals, createdOrders, createdOffers);
 
             if (deals.size() > 0) {
@@ -162,9 +162,6 @@ public class StockExchangeService {
         Set<LotOffer> offers = deals.stream().map(LotTransactions::getLotOffer).collect(Collectors.toSet());
         offers.forEach(e -> e.setActive(false));
         lotOffersRepository.saveAll(offers);
-
-        List<String> aaa = orders.stream().map(obj -> obj.getId().toString()).sorted().collect(Collectors.toList());
-        List<String> bbb = offers.stream().map(obj -> obj.getId().toString()).sorted().collect(Collectors.toList());
 
         lotOrdersRepository.saveAll(createdOrders);
         lotOffersRepository.saveAll(createdOffers);

@@ -1,4 +1,4 @@
-package ru.er_log.stock.auth.models;
+package ru.er_log.stock.auth.enities;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;

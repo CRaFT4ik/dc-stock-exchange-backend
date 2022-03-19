@@ -1,4 +1,4 @@
-package ru.er_log.stock.exchange.models;
+package ru.er_log.stock.exchange.enities;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;

@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.er_log.stock.auth.configs.jwt.JwtUtils;
-import ru.er_log.stock.auth.models.ERole;
-import ru.er_log.stock.auth.models.Role;
-import ru.er_log.stock.auth.models.User;
+import ru.er_log.stock.auth.enities.ERole;
+import ru.er_log.stock.auth.enities.Role;
+import ru.er_log.stock.auth.enities.User;
 import ru.er_log.stock.auth.pojos.JwtResponse;
 import ru.er_log.stock.auth.pojos.LoginRequest;
 import ru.er_log.stock.auth.pojos.MessageResponse;
@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 @CrossOrigin(origins = "*", maxAge = 3600)
 public class AuthController {
 
@@ -40,7 +40,7 @@ public class AuthController {
     AuthenticationManager authenticationManager;
 
     @Autowired
-    UserRepository userRespository;
+    UserRepository userRepository;
 
     @Autowired
     RoleRepository roleRepository;
@@ -77,13 +77,13 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
 
-        if (userRespository.existsByUsername(signupRequest.getUsername())) {
+        if (userRepository.existsByUsername(signupRequest.getUsername())) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .body(new MessageResponse("Error: Username is exist"));
         }
 
-        if (userRespository.existsByEmail(signupRequest.getEmail())) {
+        if (userRepository.existsByEmail(signupRequest.getEmail())) {
             return ResponseEntity
                     .status(HttpStatus.FORBIDDEN)
                     .body(new MessageResponse("Error: Email is exist"));
@@ -128,7 +128,7 @@ public class AuthController {
             });
         }
         user.setRoles(roles);
-        userRespository.save(user);
+        userRepository.save(user);
         return ResponseEntity.ok(new MessageResponse("User CREATED"));
     }
 }
