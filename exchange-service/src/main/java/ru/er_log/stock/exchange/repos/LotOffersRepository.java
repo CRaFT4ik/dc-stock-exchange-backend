@@ -17,6 +17,8 @@ import java.util.concurrent.CompletableFuture;
 public interface LotOffersRepository extends JpaRepository<LotOffer, UUID> {
     long deleteByUser_Id(Long id);
 
+    long deleteByIsActiveTrue();
+
     long countByIsActiveTrue();
 
     List<LotOffer> findByIsActiveTrue(Sort sort);
@@ -26,7 +28,7 @@ public interface LotOffersRepository extends JpaRepository<LotOffer, UUID> {
             "SELECT new ru.er_log.stock.exchange.pojos.Lot(u.price, SUM(u.amount)) " +
                     "FROM LotOffer u " +
                     "WHERE u.isActive = true " +
-                    "GROUP BY u.price ORDER BY u.price")
+                    "GROUP BY u.price ORDER BY u.price ASC")
     CompletableFuture<List<Lot>> findOffersAmountByThisPrice(Pageable pageable);
 
     CompletableFuture<Long> countByUser_IdEqualsAndIsActiveTrue(Long id);

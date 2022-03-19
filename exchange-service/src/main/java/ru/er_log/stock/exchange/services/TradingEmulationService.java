@@ -3,8 +3,6 @@ package ru.er_log.stock.exchange.services;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.util.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,11 +84,23 @@ public class TradingEmulationService {
     @Scheduled(cron = "0 0 1 * * ?")
     public void dailyUpdateFakeData() {
         try {
-            LOG.info("Daily cleaning of fake data ...");
-            cleanFakeData(offersServiceUser.getId(), ordersServiceUser.getId());
+            LOG.info("Daily cleaning of old lots ...");
+            cleanActiveLots();
+            updateFakeData();
+
+            // LOG.info("Daily cleaning of fake data ...");
+            // cleanFakeData(offersServiceUser.getId(), ordersServiceUser.getId());
         } catch (Exception e) {
             LOG.error("Error while executing scheduled task", e);
         }
+    }
+
+    private void cleanActiveLots() {
+        long deleted = lotOffersRepository.deleteByIsActiveTrue();
+        LOG.info("Deleted {} old active offer lots", deleted);
+
+        deleted = lotOrdersRepository.deleteByIsActiveTrue();
+        LOG.info("Deleted {} old active order lots", deleted);
     }
 
     // @Transactional

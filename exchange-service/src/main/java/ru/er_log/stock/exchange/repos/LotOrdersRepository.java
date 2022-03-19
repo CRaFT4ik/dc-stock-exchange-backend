@@ -19,6 +19,8 @@ public interface LotOrdersRepository extends JpaRepository<LotOrder, UUID> {
 
     long countByIsActiveTrue();
 
+    long deleteByIsActiveTrue();
+
     List<LotOrder> findByIsActiveTrue(Sort sort);
 
     @Async
@@ -26,7 +28,7 @@ public interface LotOrdersRepository extends JpaRepository<LotOrder, UUID> {
             "SELECT new ru.er_log.stock.exchange.pojos.Lot(u.price, SUM(u.amount)) " +
                     "FROM LotOrder u " +
                     "WHERE u.isActive = true " +
-                    "GROUP BY u.price ORDER BY u.price")
+                    "GROUP BY u.price ORDER BY u.price DESC")
     CompletableFuture<List<Lot>> findOrdersAmountByThisPrice(Pageable pageable);
 
     CompletableFuture<Long> countByUser_IdEqualsAndIsActiveTrue(Long id);
