@@ -74,6 +74,14 @@ public class AuthController {
                 roles));
     }
 
+    @PostMapping("/demo")
+    public ResponseEntity<?> demoAccess() {
+        var loginRequest = new LoginRequest();
+        loginRequest.setUsername("Demo User");
+        loginRequest.setPassword("zuT'>n3uG<e}/D=!");
+        return authUser(loginRequest);
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody SignupRequest signupRequest) {
 

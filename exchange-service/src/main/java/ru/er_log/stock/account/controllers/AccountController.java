@@ -66,10 +66,10 @@ public class AccountController {
             var userInfo = new UserCard.UserInfo(currentUser.getUsername(), currentUser.getEmail());
             var userBalance = offersTransactionsBalance.subtract(ordersTransactionsBalance);
             var transactionStatistics = new UserCard.TransactionStatistics(
-                    futureActiveOrdersCount.get(),
                     futureCompletedOrdersCount.get(),
-                    futureActiveOffersCount.get(),
-                    futureCompletedOffersCount.get()
+                    futureActiveOrdersCount.get(),
+                    futureCompletedOffersCount.get(),
+                    futureActiveOffersCount.get()
             );
             var userCard = new UserCard(userInfo, userBalance, transactionStatistics);
 
